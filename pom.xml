@@ -10,10 +10,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven-plugin-api-version>3.3.9</maven-plugin-api-version>
+        <junit-version>4.12</junit-version>
+        <maven-version>3.3.9</maven-version>
         <maven-plugin-annotations-version>3.5</maven-plugin-annotations-version>
         <maven-project-version>2.2.1</maven-project-version>
-        <junit-version>4.12</junit-version>
     </properties>
 
     <build>
