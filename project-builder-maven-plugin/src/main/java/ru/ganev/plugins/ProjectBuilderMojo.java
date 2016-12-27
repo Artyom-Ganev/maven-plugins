@@ -4,9 +4,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.maven.model.Model;
@@ -36,13 +41,14 @@ public class ProjectBuilderMojo extends AbstractMojo {
     private File root;
     private Map<String, RepositoryWrapper> dependencyProjects = new HashMap<>();
     private MavenXpp3Reader xpp3Reader;
+    private RepositoryWrapper currentRepo;
 
     @Override
     public void execute() throws MojoFailureException {
         if (checkRoot(project.getFile())) {
             printInfoWithSeparator("Project root found: " + root.getAbsolutePath());
-            RepositoryWrapper distProject = RepositoryWrapper.builder().project(project).build();
-            getLog().info(distProject.getScmUrl());
+            currentRepo = RepositoryWrapper.builder().project(project).build();
+            getLog().info(currentRepo.getScmUrl().toString());
             for (Map.Entry<String, String> entry : getSnapshotProperties(project.getModel()).entrySet()) {
                 addDependency(entry.getKey(), entry.getValue());
             }
@@ -82,6 +88,9 @@ public class ProjectBuilderMojo extends AbstractMojo {
         }
         File pom = new File(format("%s/%s/pom.xml", root.getParentFile().getAbsolutePath(), projectName));
         Model newModel;
+        if (!pom.exists()) {
+            Optional<URL> projectUrl = getProjectUrl(currentRepo.getScmUrl(), projectName);
+        }
         try {
             newModel = xpp3Reader.read(new FileInputStream(pom));
         } catch (FileNotFoundException e) {
@@ -93,6 +102,27 @@ public class ProjectBuilderMojo extends AbstractMojo {
         }
         MavenProject newProject = new MavenProject(newModel);
         dependencyProjects.put(projectName, RepositoryWrapper.builder().project(newProject).version(version).build());
+    }
+
+    private Optional<URL> getProjectUrl(URL currentUrl, String projectName) throws MojoFailureException {
+        URI uri;
+        URL newUrl;
+        try {
+            uri = currentUrl.toURI();
+            URI parent = uri.getPath().endsWith("/") ? uri.resolve("..") : uri.resolve(".");
+            URI newUri = parent.resolve(parent.getPath() + projectName);
+            newUrl = newUri.toURL();
+            HttpURLConnection huc = (HttpURLConnection) newUrl.openConnection();
+            huc.setRequestMethod("HEAD");
+            if (huc.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                return Optional.of(newUrl);
+            }
+        } catch (URISyntaxException e) {
+            throw new MojoFailureException("URISyntaxException", e);
+        } catch (IOException e) {
+            throw new MojoFailureException("URL problems", e);
+        }
+        return Optional.empty();
     }
 
 }

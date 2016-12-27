@@ -10,6 +10,9 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import ru.ganev.plugins.ScmEnum;
 
+import static ru.ganev.plugins.ScmEnum.GIT;
+import static ru.ganev.plugins.ScmEnum.HG;
+
 /**
  *
  */
@@ -40,8 +43,8 @@ public class RepositoryWrapper {
         return scm;
     }
 
-    public String getScmUrl() {
-        return scmUrl.toString();
+    public URL getScmUrl() {
+        return scmUrl;
     }
 
     public String getVersion() {
@@ -92,10 +95,10 @@ public class RepositoryWrapper {
 
         private static ScmEnum selectScm(Scm scm) throws MojoFailureException {
             String scmName = scm.getConnection().split(":")[1];
-            if (ScmEnum.GIT.value().equals(scmName)) {
-                return ScmEnum.GIT;
-            } else if (ScmEnum.HG.value().equals(scmName)) {
-                return ScmEnum.HG;
+            if (GIT.value().equals(scmName)) {
+                return GIT;
+            } else if (HG.value().equals(scmName)) {
+                return HG;
             }
             throw new MojoFailureException("Unsupported version control system: " + scmName);
         }
