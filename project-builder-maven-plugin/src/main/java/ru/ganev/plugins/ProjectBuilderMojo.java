@@ -80,7 +80,7 @@ public class ProjectBuilderMojo extends AbstractMojo {
         if (xpp3Reader == null) {
             xpp3Reader = new MavenXpp3Reader();
         }
-        File pom = new File(root.getParentFile().getAbsolutePath() + projectName + "pom.xml");
+        File pom = new File(format("%s/%s/pom.xml", root.getParentFile().getAbsolutePath(), projectName));
         Model newModel;
         try {
             newModel = xpp3Reader.read(new FileInputStream(pom));
